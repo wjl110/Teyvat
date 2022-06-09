@@ -1,22 +1,37 @@
 package controller
 
 import (
+	"douying/auth"
+	"douying/common"
+	"douying/dao"
+	"douying/logic"
+	"douying/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
 )
 
 type FeedResponse struct {
-	Response
-	VideoList []Video `json:"video_list,omitempty"`
+	common.Response
+	VideoList []common.VideoInfo `json:"video_list,omitempty"`
 	NextTime  int64   `json:"next_time,omitempty"`
 }
+func Feed(context *gin.Context)  {
+	// 如果是登录状态则token不为空
+	token := context.Query("token")
+	username, err := auth.CheckToken(token)
+	if err != nil {
+		fmt.Println("用户token错误")
+	}
+	var user models.User
+	if token != "" {
+		dao.RedisGet(username, &user)
+	}
 
-// Feed same demo video list for every request
-func Feed(c *gin.Context) {
-	c.JSON(http.StatusOK, FeedResponse{
-		Response:  Response{StatusCode: 0},
-		VideoList: DemoVideos,
+	context.JSON(http.StatusOK, FeedResponse{
+		Response:  common.Response{StatusCode: 0},
+		VideoList: logic.GetFeed(user, 0),
 		NextTime:  time.Now().Unix(),
 	})
 }

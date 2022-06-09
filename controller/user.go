@@ -1,57 +1,49 @@
 package controller
 
 import (
+	"douying/auth"
+	"douying/common"
+	"douying/dao"
+	"douying/logic"
+	"douying/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"sync/atomic"
+	"strconv"
 )
 
-// usersLoginInfo use map to store user info, and key is username+password for demo
-// user data will be cleared every time the server starts
-// test data: username=zhanglei, password=douyin
-var usersLoginInfo = map[string]User{
-	"zhangleidouyin": {
-		Id:            1,
-		Name:          "zhanglei",
-		FollowCount:   10,
-		FollowerCount: 5,
-		IsFollow:      true,
-	},
-}
-
-var userIdSequence = int64(1)
-
 type UserLoginResponse struct {
-	Response
+	common.Response
 	UserId int64  `json:"user_id,omitempty"`
 	Token  string `json:"token"`
 }
 
+
 type UserResponse struct {
-	Response
-	User User `json:"user"`
+	common.Response
+	UserInfo common.UserInfo `json:"user"`
 }
+
 
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
 
-	token := username + password
+	// 通过用户名获取信息，判断是否重复
+	user := models.User{Username: username}
+	models.GetUserByUsername(&user)
 
-	if _, exist := usersLoginInfo[token]; exist {
+	// id 默认为0 ，不为0则代表有数据，用户名重复
+	if user.Id != 0 {
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 1, StatusMsg: "User already exist"},
+			Response: common.Response{StatusCode: 1, StatusMsg: "User already exist"},
 		})
 	} else {
-		atomic.AddInt64(&userIdSequence, 1)
-		newUser := User{
-			Id:   userIdSequence,
-			Name: username,
-		}
-		usersLoginInfo[token] = newUser
+		u := models.User{Username: username, Password: password}
+		models.SaveUser(&u)
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 0},
-			UserId:   userIdSequence,
+			Response: common.Response{StatusCode: 0},
+			UserId:   u.Id,
 			Token:    username + password,
 		})
 	}
@@ -60,33 +52,37 @@ func Register(c *gin.Context) {
 func Login(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
-
-	token := username + password
-
-	if user, exist := usersLoginInfo[token]; exist {
+	user := models.User{Username: username}
+	models.GetUserByUsername(&user)
+	if user.Password == password {
+		token,_ := auth.CreateToken(username)
+		err := dao.RedisSet(username, user)
+		if err != nil {
+			fmt.Printf("redis set Fail %v/n",err)
+		}
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 0},
+			Response: common.Response{StatusCode: 0},
 			UserId:   user.Id,
 			Token:    token,
 		})
 	} else {
 		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
+			Response: common.Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
 		})
 	}
 }
 
 func UserInfo(c *gin.Context) {
-	token := c.Query("token")
-
-	if user, exist := usersLoginInfo[token]; exist {
+	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
+	userInfo := logic.GetUserInfoByUserId(userId, 0)
+	if userInfo.Username != "" {
 		c.JSON(http.StatusOK, UserResponse{
-			Response: Response{StatusCode: 0},
-			User:     user,
+			Response: common.Response{StatusCode: 0},
+			UserInfo: userInfo,
 		})
 	} else {
 		c.JSON(http.StatusOK, UserResponse{
-			Response: Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
+			Response: common.Response{StatusCode: 1, StatusMsg: "User doesn't login"},
 		})
 	}
 }
