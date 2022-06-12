@@ -41,10 +41,16 @@ func Register(c *gin.Context) {
 	} else {
 		u := models.User{Username: username, Password: password}
 		models.SaveUser(&u)
+		user.Id = u.Id
+		token,_ := auth.CreateToken(username)
+		err := dao.RedisSet(username, user)
+		if err != nil {
+			fmt.Printf("redis set Fail %v/n",err)
+		}
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: common.Response{StatusCode: 0},
 			UserId:   u.Id,
-			Token:    username + password,
+			Token:    token,
 		})
 	}
 }

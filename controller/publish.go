@@ -34,7 +34,7 @@ func PublishList(context *gin.Context) {
 }
 
 func Publish(context *gin.Context) {
-	userId, _ := strconv.ParseInt(context.Query("user_id"), 10 , 64)
+	userId, _ := strconv.ParseInt(context.PostForm("user_id"), 10 , 64)
 	//username, err := auth.CheckToken(token)
 	//if err != nil {
 	//	fmt.Printf("用户token错误 %s\n", err)
