@@ -12,7 +12,7 @@ func UploadOss(file *multipart.FileHeader, filename string) error {
 	// 创建OSSClient实例。
 	// yourEndpoint填写Bucket对应的Endpoint，以华东1（杭州）为例，填写为https://oss-cn-hangzhou.aliyuncs.com。其它Region请按实际情况填写。
 	// 阿里云账号AccessKey拥有所有API的访问权限，风险很高。强烈建议您创建并使用RAM用户进行API访问或日常运维，请登录RAM控制台创建RAM用户。
-	client, err := oss.New("https://oss-cn-guangzhou.aliyuncs.com", "LTAI4GBDrUUiC6xYfLPQxgFg", "VxqUPo0A4QcDbEjJC8FsRIFQKQI2bF")
+	client, err := oss.New("https://oss-cn-guangzhou.aliyuncs.com", "XXXXXX", "XXXXX")
 	if err != nil {
 		os.Exit(-1)
 		return err
