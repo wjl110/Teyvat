@@ -170,7 +170,7 @@ setting.go
 # 3. 项目地源码地址
 https://github.com/wjl110/Teyvat
 # 4. 演示视频
-飞书文档
+[飞书文档](https://bytedancecampus1.feishu.cn/docx/doxcnIU04DwZIXunXgvm20R2eJg)
 # 5. 演示说明：
   
   1、测试注册登录接口   ——>  测试视频流接口  ——> 测试关注和点赞功能 ——>  用户中心查看点赞视频列表
